@@ -6,8 +6,6 @@ import mysql from "mysql2/promise";
 
 const app = express();
 
-app.use(bodyParser.json());
-app.use(cors());
 
 const PORT = 4000;
 
@@ -32,19 +30,17 @@ function generateOTP() {
   const otp = Math.floor(100000 + Math.random() * 900000);
   return otp.toString();
 }
-//Din kod här. skriv dina funktioner
+// Din kod här. skriv dina funktioner
 async function getUsers(username, password) {
   const sql = "SELECT * FROM users WHERE username = ? and password = ?";
   const params = [username, password];
   return await query(sql, params);
-
 }
-
-async function getAccount(balance) {
-  const sql = "SELECT * FROM accounts WHERE balance = ?";
-  const params = [balance];
-  return await query(sql, params);}
-
+async function getAccount(id, token) {
+  const sql = "SELECT * FROM accounts WHERE id = ? and token = ?";
+  const params = [id, token];
+  return await query(sql, params);
+}
 // Din kod här. Skriv dina arrayer
 const users = [];
 let account = [];
@@ -52,18 +48,17 @@ let session = [];
 // Din kod här. Skriv dina routes:
 app.post("/createAccount", async (req, res) => {
   const { username, password } = req.body;
-  const balance = 0;
-
   console.log(username, password);
   try {
     const sql = "INSERT INTO users (username, password) VALUES (?,?)";
     const params = [username, password];
     const result = await query(sql, params);
-    const sql2 = "INSERT INTO accounts (balance) VALUES (?)";
-    const params2 = [balance]
+    const user = await getUsers(username, password);
+    const userId = user[0].id;
+    const sql2 = "INSERT INTO accounts (id, balance, token) VALUES (?, ?, ?)";
+    const params2 = [userId, 0, 0];
     const result2 = await query(sql2, params2);
-
-    console.log("result sql", result);
+    console.log("users", result, "account", result2);
     res.send("User Created");
   } catch (error) {
     res.status(500).send("Error creating user");
@@ -86,3 +81,5 @@ app.post("/login", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Bankens backend körs på http://localhost:${PORT}`);
 });
+
+
